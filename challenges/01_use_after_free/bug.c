@@ -33,10 +33,6 @@
  *   → 같은 주소가 destroy 후 render 에서 다시 나오고, vtbl 값이 달라져 있으면 UAF.
  *   (stdout 은 버퍼링되니 stderr 로 찍어야 크래시 직전 로그가 남는다)
  *
- * TODO: "해제"와 "슬롯 정리"를 한 곳에서 같이 하세요. 위젯 자신은 Screen 을 모르므로
- *       (dialog_on_event 는 self 만 안다) 이벤트 핸들러에서는 closed 표시만 남기고,
- *       Screen 쪽에서 closed 위젯을 free 한 뒤 그 슬롯을 NULL 로 만드는 편이 자연스럽습니다.
- *       이후 dispatch/render 루프가 NULL 슬롯을 건너뛰게 하세요. "해제 = 소유 포인터 무효화".
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,27 +88,34 @@ static Widget *widget_new(const VTable *vt, int id, const char *label) {
     *   생각해보기: sizeof(Widget) 대신 sizeof *w 로 쓰면 어떤 장점이 있을까?
     */
     Widget *w = malloc(sizeof *w);
-    if (!w) { perror("malloc"); exit(1); }
+    if (!w)
+    {
+        perror("malloc"); // 마지막으로 발생한 시스템 오류를 "" 내용과 함께 출력함.
+        exit(1); // 호출 즉시 정상적인 종료로 들어감.
+    }
     w->vtbl = vt;
     w->id = id;
     w->closed = 0;
-    strncpy(w->label, label, sizeof(w->label) - 1);
+    strncpy(w->label, label, sizeof(w->label) - 1); // 문자열 복사. to, from, size 복사할 값이 size보다 작으면 '\0'으로 채움
     w->label[sizeof(w->label) - 1] = '\0';
     return w;
 }
 
 static void widget_destroy(Widget *w) {
-    free(w);          
+    free(w);
 }
 
 /* ── Screen ──────────────────────────────────────────────────── */
 static void screen_add(Screen *s, Widget *w) {
-    if (s->count < MAX_WIDGETS) s->items[s->count++] = w;
+    if (s->count < MAX_WIDGETS)
+        s->items[s->count++] = w;
 }
 
 static void screen_dispatch(Screen *s, int code) {
     for (int i = 0; i < s->count; i++) {
         Widget *w = s->items[i];
+        if(w == NULL)
+            continue;
         w->vtbl->on_event(w, code);
     }
 }
@@ -120,6 +123,8 @@ static void screen_dispatch(Screen *s, int code) {
 static void screen_render(Screen *s) {
     for (int i = 0; i < s->count; i++) {
         Widget *w = s->items[i];
+        if(w == NULL)
+            continue;
         w->vtbl->render(w);      
     }
 }
@@ -127,13 +132,14 @@ static void screen_render(Screen *s) {
 static void dialog_on_event(Widget *self, int code) {
     if (code == 1) {
         self->closed = 1;
-        widget_destroy(self);   
+        // widget_destroy(self);   
     }
 }
 
 static char *app_build_status(const char *text) {
     char *msg = malloc(sizeof(Widget));   
-    if (!msg) exit(1);
+    if (!msg)
+        exit(1);
 
     /* [테스트용 연출] 재사용한 메모리를 0xAB 로 '일부러' 덮어써서 오염시킨다.
      * 실무라면 다른 기능이 우연히 이 자리를 덮어쓰겠지만, 여기서는 UAF 크래시를
@@ -158,12 +164,20 @@ int main(void) {
     screen_dispatch(&s, 1);
 
     /* TODO 닫힌(closed) 위젯을 여기서 정리(free + 해당 슬롯 NULL)할 필요가 있음 */
+    for(int i = 0; i < MAX_WIDGETS; ++i)
+    {
+        if(s.items[i] != NULL && s.items[i]->closed == 1)
+        {
+            widget_destroy(s.items[i]);
+            s.items[i] = NULL;
+        }
+    }
 
     char *status = app_build_status("dialog closed");
     printf("%s\n", status);
 
     printf("frame 2:\n");
-    screen_render(&s);           
+    screen_render(&s);
 
     free(status);
     for (int i = 0; i < s.count; i++) free(s.items[i]);
