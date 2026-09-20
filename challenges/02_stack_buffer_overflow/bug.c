@@ -46,9 +46,6 @@
  *   → idx >= SIZE 가 찍히면 배열 경계를 넘은 것.
  *   (stdout 은 버퍼링되니 stderr 로 찍어야 크래시 직전 로그가 남는다)
  *
- * TODO: 행 루프를 `i < ROWS` 로 고치세요(유효 행은 0..ROWS-1).
- *       인덱싱 산술을 쓸 때는 "마지막으로 접근하는 인덱스"를 손으로 계산해
- *       배열 크기와 반드시 비교하세요.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,18 +54,25 @@
 enum { SIZE = ROWS * (ROWS + 1) / 2 };   /* 0..ROWS-1 행을 담는 정확한 크기 */
 
 /* 행 i, 열 j 의 삼각 인덱스 */
-static int tri_index(int i, int j) {
+static int tri_index(int i, int j) 
+{
     return i * (i + 1) / 2 + j;
 }
 
 /* 파스칼의 삼각형을 tri[] 에 채운다. */
-static void build_pascal(int *tri, int rows) {
-    for (int i = 0; i <= rows; i++) {
-        for (int j = 0; j <= i; j++) {
+static void build_pascal(int *tri, int rows)
+ {
+    for (int i = 0; i < rows; i++) 
+    {
+        for (int j = 0; j <= i; j++)
+        {
             int idx = tri_index(i, j);
-            if (j == 0 || j == i) {
-                tri[idx] = 1;                         /* 양 끝은 1 */
-            } else {
+            if (j == 0 || j == i)
+            {
+                tri[idx] = 1;     /* 양 끝은 1 */
+            } 
+            else
+            {
                 int up_left  = tri_index(i - 1, j - 1);
                 int up_right = tri_index(i - 1, j);
                 tri[idx] = tri[up_left] + tri[up_right];
@@ -89,12 +93,14 @@ static void print_row(const int *tri, int i) {
     printf("   (sum=%ld)\n", row_sum(tri, i));
 }
 
-int main(void) {
+int main(void) 
+{
     int tri[SIZE];
 
     build_pascal(tri, ROWS);          
 
-    for (int i = 0; i < ROWS; i++) print_row(tri, i);
+    for (int i = 0; i < ROWS; i++) 
+        print_row(tri, i);
 
     printf("SIZE = %d\n", SIZE);
 
