@@ -60,20 +60,28 @@ static void list_init(IntList *l) {
 }
 
 static void list_ensure(IntList *l, size_t need) {
-    if (need <= l->cap) return;
+    if (need <= l->cap) 
+        return;
 
     size_t newcap = l->cap ? l->cap * 2 : 8;
-    while (newcap < need) newcap *= 2;
+    while (newcap < need) 
+        newcap *= 2;
 
-    int *p = realloc(l->data, l->cap * sizeof(int));
-    if (!p) { perror("realloc"); free(l->data); exit(1); }
+    int *p = realloc(l->data, newcap * sizeof(int));
+    if (!p) 
+    {
+        perror("realloc");
+        free(l->data); 
+        exit(1);
+    }
 
     l->data = p;
     l->cap  = newcap;
 }
 
 static void list_push(IntList *l, int x) {
-    if (l->len == l->cap) list_ensure(l, l->cap + 1);
+    if (l->len == l->cap) 
+        list_ensure(l, l->cap + 1);
     l->data[l->len++] = x;
 }
 
@@ -94,8 +102,9 @@ int main(void) {
     list_init(&l);
 
     const int N = 2000000;
-    for (int i = 0; i < N; i++) {
-        list_push(&l, i % 100);        
+    for (int i = 0; i < N; i++)
+    {
+        list_push(&l, i % 100);
     }
 
     printf("len=%zu cap=%zu sum=%lld\n", l.len, l.cap, list_sum(&l));
