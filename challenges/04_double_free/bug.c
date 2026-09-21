@@ -102,11 +102,11 @@ static void directory_dump(Directory *d) {
 static void directory_free(Directory *d) {
     for (int i = 0; i < d->count; i++) {
         free(d->by_id[i]->name);
-        free(d->by_id[i]);                 
+        free(d->by_id[i]);
     }
-    for (int i = 0; i < d->count; i++) {
-        free(d->by_name[i]);               
-    }
+    // for (int i = 0; i < d->count; i++) {
+    //     free(d->by_name[i]);
+    // }
     d->count = 0;
 }
 
@@ -122,9 +122,10 @@ int main(void) {
     directory_dump(&dir);
 
     Rec *r = find_by_id(&dir, 2);
-    if (r) printf("lookup id=2 -> %s\n", r->name);
+    if (r)
+        printf("lookup id=2 -> %s\n", r->name);
 
-    directory_free(&dir);                  
+    directory_free(&dir);
     printf("done\n");
     return 0;
 }
