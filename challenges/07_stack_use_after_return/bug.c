@@ -12,7 +12,7 @@
  * [증상]
  *   split_lines() 는 줄 포인터들을 '지역 배열' parts[] 에 모은 뒤, 그 배열의 주소를
  *   LineView.lines 에 담아 돌려준다. 함수가 끝나면 parts[] 가 있던 스택 프레임은
- *   무효가 되고, 이어서 호출되는 warm_stack() 이 그 자리를 다른 값으로 덮는다.
+ *  어 무효가 되고, 이서 호출되는 warm_stack() 이 그 자리를 다른 값으로 덮는다.
  *   그 뒤 v.lines[i] 를 읽으면 '덮인 쓰레기'를 포인터로 해석해 역참조 → SIGSEGV.
  *   (v.lines 자체는 유효한 스택 주소지만, 그 안의 내용이 이미 오염됐다는 점이 함정)
  *
@@ -53,7 +53,9 @@ static void view_set(LineView *out, char **arr, int n) {
 }
 
 static void split_lines(LineView *out, char *text) {
-    char *parts[MAX_LINES];              
+    // char *parts[MAX_LINES];
+    char** parts = malloc(MAX_LINES * sizeof(*parts));
+
     int n = 0;
     /* strtok는 새로 할당하지 않고, 넘겨받은 문자열 내부의 주소를 돌려준다. 
     * 따라서, strtok은 원본 버퍼를 제자리에서 수정한다. 
@@ -87,5 +89,7 @@ int main(void) {
         checksum += (unsigned char)v.lines[i][0];
 
     printf("lines = %d, checksum = %ld\n", v.count, checksum);
+
+    free(v.lines);
     return 0;
 }
