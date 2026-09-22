@@ -46,10 +46,11 @@ static char *skip_ws(char *s) {
 }
 
 static void parse_headers(char *text, Headers *h) {
-    for (char *line = strtok(text, "\n"); line != NULL; line = strtok(NULL, "\n")) {
-        char *colon = strchr(line, ':');   
-
-        *colon = '\0';                    
+    for (char *line = strtok(text, "\n"); line != NULL; line = strtok(NULL, "\n")) { // strtok: 문자열을 구분자로 나누기
+        char *colon = strchr(line, ':');    // strchr: 문자 하나 찾기, 특정 문자가 처음 등장하는 위치 반환
+        if(!colon)
+            continue;
+        *colon = '\0';
         char *key = line;
         char *val = skip_ws(colon + 1);
 
