@@ -45,8 +45,8 @@
  *   생각해보기 1 (POSIX 란?): POSIX 는 유닉스 계열 OS 가 공통으로 제공하기로 약속한
  *               '운영체제 인터페이스 표준'이다(파일·프로세스·스레드·문자열 등의 API 규격).
  *               리눅스·macOS 등이 이를 따르므로, POSIX 함수를 쓰면 여러 OS 에서 같은
- *               코드가 동작한다. 그런데 왜 C 표준(C11)과 POSIX 를 굳이 구분할까?
- *   생각해보기 2 (버전 관리 관점): 왜 "쓸 수 있는 표준 버전"을 코드가 스스로 선언하게 할까?
+ *               코드가 동작한다. 그런데 왜 C 표준(C11)과 POSIX 를 굳이 구분할까?   환경이 다르니까
+ *   생각해보기 2 (버전 관리 관점): 왜 "쓸 수 있는 표준 버전"을 코드가 스스로 선언하게 할까?    프로그래머가 원하는 함수를 컴파일러에게 어디 있다고 알려주기 위해서?
  *               (숫자 200809L = 표준의 '연-월' 버전. 값이 클수록 더 최신 표준) */
 #define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
@@ -61,34 +61,39 @@ typedef struct {
 } Row;
 
 static void parse_row(Row *r, const char *csv) {
-    r->base = strdup(csv);       
+    r->base = strdup(csv);       // strdup : 문자열 힙에 복사하고 반환
     if (!r->base) { perror("strdup"); exit(1); }
     r->n = 0;
 
-    for (char *tok = strtok(r->base, ","); tok && r->n < MAX_FIELDS;
-         tok = strtok(NULL, ",")) {
+    for (char *tok = strtok(r->base, ","); tok && r->n < MAX_FIELDS; tok = strtok(NULL, ","))  // strtok: split같은 놈. strtok(NULL, ",")은 기존 자르던 문자열에서 다음 부분 가져오는 방법
+    {
         r->fields[r->n++] = tok;  /* fields[0]=base, 나머지는 내부 포인터 */
     }
 }
 
 static void row_print(const Row *r) {
     printf("%d fields:", r->n);
-    for (int i = 0; i < r->n; i++) printf(" [%s]", r->fields[i]);
+    for (int i = 0; i < r->n; i++) 
+        printf(" [%s]", r->fields[i]);
     printf("\n");
 }
 
 static void row_free(Row *r) {
-    for (int i = 0; i < r->n; i++) {
-        free(r->fields[i]);       
-    }
+    free(r->base);
+    // for (int i = 0; i < r->n; i++) {
+    //     free(r->fields[i]);       
+    // }
     r->n = 0;
 }
 
 int main(void) {
     Row r;
+    printf("0\n");
     parse_row(&r, "id,name,dept,salary");
+    printf("1\n");
     row_print(&r);
-
+    printf("2\n");
+    
     row_free(&r);                 
     printf("done\n");
     return 0;
