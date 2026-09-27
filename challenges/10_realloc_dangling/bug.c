@@ -63,8 +63,13 @@ static void eb_init(EditBuffer *e) {
 static void eb_snapshot(EditBuffer *e) {
     if (e->undo_n < MAX_UNDO)
     {
-        int* newData = malloc(sizeof e->data);
-        newData = memcpy(newData, e->data, sizeof e->data);
+        int* newData = malloc(sizeof((*e->data)) * e->len);
+        if(!newData)
+        {
+            perror("malloc");
+            exit(1);
+        }
+        newData = memcpy(newData, e->data, sizeof((*e->data)) * e->len);
         e->undo[e->undo_n++] = newData;
     }
 }
